@@ -28,38 +28,38 @@ import re
 from docx import Document
 from transformers import MT5Tokenizer, MT5ForConditionalGeneration
 import concurrent.futures
+import language_tool_python
 
-
+# Настройка логгирования
 logging.basicConfig(filename='generation_logs.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-
+# Загрузка и подготовка модели
 model_name = "google/mt5-small"
 tokenizer = MT5Tokenizer.from_pretrained(model_name)
 model = MT5ForConditionalGeneration.from_pretrained(model_name)
 model.to('cuda')
 
+# Инициализация инструмента проверки грамматики
+tool = language_tool_python.LanguageTool('en-US')
 
 def clean_text(text):
-
     text = re.sub(r'<extra_id_\d+>', '', text)
-    text = text.replace('.', '')
     return text.strip()
-
 
 def generate_improved_text(text):
     logging.info(f"Начало обработки текста: {text[:30]}...")
     input_ids = tokenizer.encode("improve text: " + text, return_tensors="pt").to('cuda')
     generated_ids = model.generate(input_ids, max_length=512)
     improved_text = tokenizer.decode(generated_ids[0], skip_special_tokens=True)
-    # Очистка текста
+    # Очистка текста и исправление грамматических ошибок
     improved_text = clean_text(improved_text)
+    matches = tool.check(improved_text)
+    corrected_text = language_tool_python.utils.correct(improved_text, matches)
     logging.info("Конец генерации")
-    return improved_text
-
+    return corrected_text
 
 def process_paragraph(text):
     return generate_improved_text(text) if text.strip() else ""
-
 
 doc_path = '/content/drive/My Drive/Colab Notebooks/elibrary_37083625_67327706.docx'
 doc = Document(doc_path)
@@ -80,6 +80,6 @@ for result, para in zip(results, doc.paragraphs):
         if run.font.name:
             new_run.font.name = run.font.name
 
-new_doc_path = '/content/drive/My Drive/Colab Notebooks/19updated_elibrary_37083625_67327706.docx'
+new_doc_path = '/content/drive/My Drive/Colab Notebooks/24updated_elibrary_37083625_67327706.docx'
 new_doc.save(new_doc_path)
 logging.info("Файл успешно создан")
