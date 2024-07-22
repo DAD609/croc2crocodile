@@ -12,7 +12,7 @@
 ## Установка
 Вы можете установить и запустить проект, следуя инструкциям:
 ```bash
-git clone https://github.com/yourusername/my-model-project.git
-cd my-model-project
+git clone https://github.com/DAD609/croc2crocodile.git
+cd croc2crocodile
 pip install -r requirements.txt
 ```
